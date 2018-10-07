@@ -101,7 +101,7 @@ func (p PublicKey) Address() *Address {
 	return &Address{
 		Version:    AddressVersion,
 		PubKeyHash: pkhash,
-		Checksum:   checksum(pkhash),
+		Checksum:   checksum(append([]byte{AddressVersion}, pkhash...)),
 	}
 }
 
@@ -129,7 +129,7 @@ func NewAddress(a string) (*Address, error) {
 		PubKeyHash: da[1 : l-4],
 		Checksum:   da[l-4 : l],
 	}
-	if !bytes.Equal(checksum(addr.PubKeyHash), addr.Checksum) {
+	if !bytes.Equal(checksum(da[0:l-4]), addr.Checksum) {
 		return nil, fmt.Errorf("invalid checksum")
 	}
 	return &addr, nil

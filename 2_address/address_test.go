@@ -31,6 +31,15 @@ func TestPK(t *testing.T) {
 }
 
 func TestAddress(t *testing.T) {
+	aaa, err := NewAddress("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("Version   : %v", aaa.Version)
+	t.Logf("PubKeyHash: %x", aaa.PubKeyHash)
+	t.Logf("Checksum  : %x", aaa.Checksum)
+	t.Logf("Address  : %v", aaa)
+
 	key, err := NewKey()
 	if err != nil {
 		t.Fatal(err)
