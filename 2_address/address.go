@@ -72,7 +72,7 @@ func (p PublicKey) Key() []byte {
 type Address struct {
 	Version    byte   // Version of the address
 	PubKeyHash []byte // Hash of the public key ripemd160(sha256(pk))
-	Checksum   []byte // Checksum of PubKeyHash sha256(sha256(pkh))
+	Checksum   []byte // Checksum of Version+PubKeyHash sha256(sha256(v+pkh))
 }
 
 // checksum calculates the checksum of blob by taking the first 4 bytes from
@@ -108,6 +108,10 @@ func (p PublicKey) Address() *Address {
 // String returns the human readable form of an Address. The process is
 // base58(Version+PubKeyHash+Checksum).
 func (a Address) String() string {
+	if !bytes.Equal(checksum(append([]byte{a.Version}, a.PubKeyHash...)),
+		a.Checksum) {
+		panic("invalid checksum")
+	}
 	addr := append([]byte{a.Version}, a.PubKeyHash...)
 	return Encode(append(addr, a.Checksum...))
 }

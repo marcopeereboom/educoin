@@ -1,9 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"testing"
 )
+
+func assertPanic(t *testing.T, f func()) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
+	f()
+}
 
 func TestPK(t *testing.T) {
 	key, err := NewKey()
@@ -31,15 +41,6 @@ func TestPK(t *testing.T) {
 }
 
 func TestAddress(t *testing.T) {
-	aaa, err := NewAddress("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("Version   : %v", aaa.Version)
-	t.Logf("PubKeyHash: %x", aaa.PubKeyHash)
-	t.Logf("Checksum  : %x", aaa.Checksum)
-	t.Logf("Address  : %v", aaa)
-
 	key, err := NewKey()
 	if err != nil {
 		t.Fatal(err)
@@ -62,5 +63,36 @@ func TestAddress(t *testing.T) {
 
 	if aa.String() != a.String() {
 		t.Fatalf("stringers don't match")
+	}
+}
+
+func TestAddressCorrupt(t *testing.T) {
+	key, err := NewKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk := NewPublicKey(key.Public())
+	a := pk.Address()
+	aa, err := NewAddress(a.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertPanic(t, func() {
+		// Corrupt Address
+		aa.PubKeyHash[0] = ^aa.PubKeyHash[0]
+		if aa.String() == a.String() {
+			t.Fatalf("stringers match")
+		}
+	})
+
+	// Fix checksum and try again
+	aa.Checksum = checksum(append([]byte{aa.Version}, aa.PubKeyHash...))
+	if bytes.Equal(aa.Checksum, a.Checksum) {
+		t.Fatal("checksums should not be equal")
+	}
+
+	if aa.String() == a.String() {
+		t.Fatalf("stringers match")
 	}
 }
