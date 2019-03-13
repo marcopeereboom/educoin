@@ -52,13 +52,13 @@ func (b Block) Verify() bool {
 }
 
 // Mine attempts to mine the block within the provided range.
-func (b *Block) Mine(difficulty uint) error {
+func (b *Block) Mine(difficulty uint, start, end uint64) error {
 	target := big.NewInt(1)
 	target.Lsh(target, uint(256-difficulty))
 	t := encodeUint64(uint64(b.Timestamp))
 	n := make([]byte, 8)
 	bi := big.Int{}
-	for i := uint64(0); i < math.MaxInt64; i++ {
+	for i := start; i < end; i++ {
 		binary.BigEndian.PutUint64(n, i)
 		hash := sha256.Sum256(bytes.Join([][]byte{t, b.Data,
 			b.PreviousBlockHash, n}, []byte{}))
@@ -128,7 +128,7 @@ func (b Blockchain) Len() int {
 func NewBlockChain(data []byte) (*Blockchain, error) {
 	b := &Blockchain{}
 	blk := b.PrepareBlock(data)
-	err := blk.Mine(Difficulty)
+	err := blk.Mine(Difficulty, 0, math.MaxUint64)
 	if err != nil {
 		return nil, err
 	}
